@@ -1,0 +1,105 @@
+name: LXC Compile
+
+on:
+  # Allow to trigger action manually
+  workflow_dispatch:
+
+jobs:
+  build_lxc:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 1
+
+    - name: Install dependencies
+      run: apt-get update && apt-get -y install git make pkg-config libdevmapper-dev libseccomp-dev libbtrfs-dev jq meson libdbus-1-dev docbook2x libpam0g-dev ninja-build pkg-config libcap-dev libseccomp-dev libselinux1-dev gcc xz-utils
+
+    - name: Compile LXC
+      run: |
+        # Get LXC version and create necessary directories
+        LXC_V=$(curl -u ${{ github.actor }}:${{ secrets.GITHUB_TOKEN }} https://api.github.com/repos/lxc/lxc/releases/latest | jq -r '.tag_name')
+        BUILDDIR=${{ github.workspace }}/$LXC_V
+        PACKAGEDIR=$BUILDDIR/lxc
+        mkdir -p $PACKAGEDIR
+        
+        # LXC
+        cd $BUILDDIR
+        git clone --branch $LXC_V --single-branch --depth 1 https://github.com/lxc/lxc
+        cd $BUILDDIR/lxc
+        meson setup -Dprefix=/usr \
+          --libdir=/usr/lib/x86_64-linux-gnu \
+          -Dsysconfdir=/etc \
+          -Dprefix=/usr \
+          -Dwerror=false \
+          -Dapparmor=false \
+          -Dselinux=false \
+          -Dpam-cgroup=true \
+          -Dinit-script=sysvinit \
+          build
+
+        meson compile -C build
+
+        DESTDIR=$PACKAGEDIR make install -j20
+
+        rm -rf $PACKAGEDIR/etc/init.d/* 
+
+        cp ${{ github.workspace }}/etc/init.d/lxc $PACKAGEDIR/etc/init.d/lxc
+        cp ${{ github.workspace }}/etc/init.d/lxc-net $PACKAGEDIR/etc/init.d/lxc-net
+
+        cat > $PACKAGEDIR/DEBIAN/control << EOF
+        Package: LXC
+        Version: ${LXC_V#v}
+        Architecture: amd64
+        Maintainer: admin@minenet.at
+        Description: Custom LXC build for MOS
+        EOF
+
+        cd $BUILDDIR
+        chmod -R 755 $PACKAGEDIR
+        dpkg-deb --build lxc mos-lxc_${LXC_V#v}_amd64.deb
+        md5sum $BUILDDIR/mos-lxc_${LXC_V#v}_amd64.deb | awk '{print $2}' > $BUILDDIR/mos-lxc_${LXC_V#v}_amd64.deb.md5
+
+        echo "LXC_V=${LXC_V#v}
+        BUILDDIR=$BUILDDIR" >> $GITHUB_ENV
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ env.LXC_V }}
+        release_name: "LXC ${{ env.LXC_V }}"
+        body: |
+          This is the custom Debian package from LXC for MOS
+
+          ### Package contents:
+          - [lxc](https://github.com/lxc/lxc) v${{ env.LXC_V }}
+        draft: false
+        prerelease: false
+
+    - name: Upload deb to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ env.BUILDDIR }}/mos-lxc_${{ env.LXC_V }}_amd64.deb
+        asset_name: mos-lxc_${{ env.LXC_V }}_amd64.deb
+        asset_content_type: application/vnd.debian.binary-package
+
+    - name: Upload md5 to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ env.BUILDDIR }}/mos-lxc_${{ env.LXC_V }}_amd64.deb.md5
+        asset_name: mos-lxc_${{ env.LXC_V }}_amd64.deb.md5
+        asset_content_type: text/plain
+
+    - name: Cleanup
+      run: rm -rf ${{ github.workspace }}/* ${{ github.workspace }}/.*
