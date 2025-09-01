@@ -51,7 +51,7 @@ jobs:
 
         cat > $PACKAGEDIR/DEBIAN/control << EOF
         Package: LXC
-        Version: ${LXC_V#v}
+        Version: ${LXC_V#v}-mos
         Architecture: amd64
         Maintainer: admin@minenet.at
         Description: Custom LXC build for MOS
