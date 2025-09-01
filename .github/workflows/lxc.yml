@@ -60,7 +60,7 @@ jobs:
         cd $BUILDDIR
         chmod -R 755 $PACKAGEDIR
         dpkg-deb --build lxc_package mos-lxc_${LXC_V#v}_amd64.deb
-        md5sum $BUILDDIR/mos-lxc_${LXC_V#v}_amd64.deb | awk '{print $2}' > $BUILDDIR/mos-lxc_${LXC_V#v}_amd64.deb.md5
+        md5sum $BUILDDIR/mos-lxc_${LXC_V#v}_amd64.deb | awk '{print $1}' > $BUILDDIR/mos-lxc_${LXC_V#v}_amd64.deb.md5
 
         echo "LXC_V=${LXC_V#v}
         BUILDDIR=$BUILDDIR" >> $GITHUB_ENV
