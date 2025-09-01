@@ -22,7 +22,7 @@ jobs:
         # Get LXC version and create necessary directories
         LXC_V=$(curl -u ${{ github.actor }}:${{ secrets.GITHUB_TOKEN }} https://api.github.com/repos/lxc/lxc/releases/latest | jq -r '.tag_name')
         BUILDDIR=${{ github.workspace }}/$LXC_V
-        PACKAGEDIR=$BUILDDIR/lxc
+        PACKAGEDIR=$BUILDDIR/lxc_package
         mkdir -p $PACKAGEDIR/DEBIAN
         
         # LXC
@@ -102,4 +102,5 @@ jobs:
         asset_content_type: text/plain
 
     - name: Cleanup
+      if: always()
       run: rm -rf ${{ github.workspace }}/* ${{ github.workspace }}/.*
