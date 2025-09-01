@@ -23,7 +23,7 @@ jobs:
         LXC_V=$(curl -u ${{ github.actor }}:${{ secrets.GITHUB_TOKEN }} https://api.github.com/repos/lxc/lxc/releases/latest | jq -r '.tag_name')
         BUILDDIR=${{ github.workspace }}/$LXC_V
         PACKAGEDIR=$BUILDDIR/lxc
-        mkdir -p $PACKAGEDIR $PACKAGEDIR/DEBIAN
+        mkdir -p $PACKAGEDIR/DEBIAN
         
         # LXC
         cd $BUILDDIR
