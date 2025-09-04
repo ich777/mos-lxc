@@ -49,6 +49,9 @@ jobs:
 
         rm -rf $PACKAGEDIR/etc/init.d/* $PACKAGEDIR/usr/include $PACKAGEDIR/usr/lib/x86_64-linux-gnu/liblxc.a $PACKAGEDIR/usr/lib/x86_64-linux-gnu/pkgconfig
 
+        # Add Licenses to copyright
+        cp ${{ github.workspace }}/LICENSE $PACKAGEDIR/usr/share/doc/mos-lxc/LICENSE
+        echo -e "- LICENSE: License for packaging scripts" >> $PACKAGEDIR/usr/share/doc/mos-lxc/copyright
         cp $BUILDDIR/lxc/LICENSE.GPL2 $PACKAGEDIR/usr/share/doc/mos-lxc/LICENSE.GPL2-lxc
         echo -e "- LICENSE.GPL2-lxc: License for lxc components" >> $PACKAGEDIR/usr/share/doc/mos-lxc/copyright
         cp $BUILDDIR/lxc/LICENSE.LGPL2.1 $PACKAGEDIR/usr/share/doc/mos-lxc/LICENSE.LGPL2.1-lxc
