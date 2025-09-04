@@ -23,8 +23,11 @@ jobs:
         LXC_V=$(curl -u ${{ github.actor }}:${{ secrets.GITHUB_TOKEN }} https://api.github.com/repos/lxc/lxc/releases/latest | jq -r '.tag_name')
         BUILDDIR=${{ github.workspace }}/$LXC_V
         PACKAGEDIR=$BUILDDIR/lxc_package
-        mkdir -p $PACKAGEDIR/DEBIAN
-        
+        mkdir -p $PACKAGEDIR/DEBIAN $PACKAGEDIR/usr/share/doc/mos-lxc
+
+        # Add initial copyright to package dir:
+        echo -e "This package contains software under various licenses.\nSee the following files for details:\n" > $PACKAGEDIR/usr/share/doc/mos-lxc/copyright
+
         # LXC
         cd $BUILDDIR
         git clone --branch $LXC_V --single-branch --depth 1 https://github.com/lxc/lxc
@@ -44,7 +47,12 @@ jobs:
 
         DESTDIR=$PACKAGEDIR make install -j20
 
-        rm -rf $PACKAGEDIR/etc/init.d/* 
+        rm -rf $PACKAGEDIR/etc/init.d/* $PACKAGEDIR/usr/include $PACKAGEDIR/usr/lib/x86_64-linux-gnu/liblxc.a $PACKAGEDIR/usr/lib/x86_64-linux-gnu/pkgconfig
+
+        cp $BUILDDIR/lxc/LICENSE.GPL2 $PACKAGEDIR/usr/share/doc/mos-lxc/LICENSE.GPL2-lxc
+        echo -e "- LICENSE.GPL2-lxc: License for lxc components" >> $PACKAGEDIR/usr/share/doc/mos-lxc/copyright
+        cp $BUILDDIR/lxc/LICENSE.LGPL2.1 $PACKAGEDIR/usr/share/doc/mos-lxc/LICENSE.LGPL2.1-lxc
+        echo -e "- LICENSE.LGPL2.1-lxc: License for lxc components" >> $PACKAGEDIR/usr/share/doc/mos-lxc/copyright
 
         cp ${{ github.workspace }}/etc/init.d/lxc $PACKAGEDIR/etc/init.d/lxc
         cp ${{ github.workspace }}/etc/init.d/lxc-net $PACKAGEDIR/etc/init.d/lxc-net
