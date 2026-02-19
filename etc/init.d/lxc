@@ -74,6 +74,7 @@ mos_start() {
   mount --bind /var/lib/lxc_icons /var/www/lxc_icons 2>/dev/null
   mount --bind "$LXC_DIRECTORY/custom_icons" /var/www/lxc_custom 2>/dev/null
   chmod -R 755 /var/lib/lxc_icons "$LXC_DIRECTORY/custom_icons"
+  chmod 777 /var/lib/lxc
 }
 
 # MOS custom
