@@ -78,22 +78,6 @@ jobs:
         echo "LXC_V=${LXC_V#v}
         BUILDDIR=$BUILDDIR" >> $GITHUB_ENV
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ env.LXC_V }}
-        release_name: "LXC ${{ env.LXC_V }}"
-        body: |
-          This is the custom Debian package from LXC for MOS
-
-          ### Package contents:
-          - [lxc](https://github.com/lxc/lxc) v${{ env.LXC_V }}
-        draft: false
-        prerelease: false
-
     - name: Create and Upload Release
       uses: softprops/action-gh-release@v2
       with:
