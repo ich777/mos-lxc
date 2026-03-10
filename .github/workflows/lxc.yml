@@ -6,7 +6,9 @@ on:
 
 jobs:
   build_lxc:
-    runs-on: self-hosted
+    runs-on: [self-hosted, X64]
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout repository
@@ -92,25 +94,23 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: Upload deb to Release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create and Upload Release
+      uses: softprops/action-gh-release@v2
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ env.BUILDDIR }}/mos-lxc_${{ env.LXC_V }}_amd64.deb
-        asset_name: mos-lxc_${{ env.LXC_V }}_amd64.deb
-        asset_content_type: application/vnd.debian.binary-package
+        tag_name: v${{ env.LXC_V }}
+        name: "LXC ${{ env.LXC_V }}"
+        body: |
+          This is the custom Debian package from LXC for MOS
 
-    - name: Upload md5 to Release
-      uses: actions/upload-release-asset@v1
+          ### Package contents:
+          - [lxc](https://github.com/lxc/lxc) v${{ env.LXC_V }}
+        files: |
+          ${{ env.BUILDDIR }}/*.deb
+          ${{ env.BUILDDIR }}/*.deb.md5
+        overwrite_files: true
+        fail_on_unmatched_files: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ env.BUILDDIR }}/mos-lxc_${{ env.LXC_V }}_amd64.deb.md5
-        asset_name: mos-lxc_${{ env.LXC_V }}_amd64.deb.md5
-        asset_content_type: text/plain
 
     - name: Set notification variables on success
       if: success()
